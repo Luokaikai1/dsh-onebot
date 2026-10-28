@@ -15,6 +15,55 @@
                         └─ 出站：单条/t2i 卡片发送、Markdown 剥离、[[qq_forward]]、图片/语音/视频/文件工具
 ```
 
+> **本仓库是个人 fork**：基于 [mario841859784/dsh-onebot](https://github.com/mario841859784/dsh-onebot) 的 v0.9.6（npm `dsh-onebot-qq@0.9.6`），上游版权与 BSD-3-Clause 许可不变。上游的功能清单、安装方式、工具文档见上游仓库；本 README 只额外说明本 fork 的改动与已知限制。
+
+## 本 fork 的改动
+
+### 1. 心跳主动搭话（新增 `lib/heartbeat.js`，269 行）
+
+让机器人不只被动等消息：调度器周期性评估指定群「现在适不适合开口」，适合就把最近的群聊上下文交给该群 agent，由**模型自己决定说不说话**。
+
+- **全局单一 tick**（`heartbeatTickMs`，默认 60s，`unref` 不阻塞进程退出）遍历 `heartbeatChats` 里的群。
+- **六道零成本闸门**，全过才消耗一次模型回合：
+  1. 安静时段（`heartbeatQuietHours`，`"HH:MM-HH:MM"` 数组，支持跨午夜）
+  2. 该群 agent 回合进行中 → 不插队
+  3. 当日主动次数已达 `heartbeatMaxPerDay`（按本地自然日记数）
+  4. 距上次主动开口不足 `heartbeatCooldownMinutes`
+  5. 距上次心跳判定（含沉默）不足 `heartbeatRetryMinutes`（防止死群每 tick 空转）
+  6. 群未冷场：最后一条群消息距今已达到 `heartbeatIdleMinutes`（聊得正热不插话）
+- 过闸后用 OneBot `get_group_msg_history` 拉最近 `heartbeatHistoryCount` 条消息，拼成情境回合（带人格/记忆/会话历史）投给该群 agent。
+- **`[SILENT]` 协议**：模型最终回复含 `[SILENT]` → 出站拦截吞掉、不发送；不含 → 正常发送并计次。
+- **出站拦截只认最终回复**：`sendToChat` 只对 `decisionTarget === true` 的最终回复做裁决，⏳排队提示、插话、错误通知等插件通知不会被误判成「开口」。
+- **心跳回合裁决期间强制关闭中间话**（`effectiveInterim = false`），避免把模型的过程话漏进群里。
+- **剥离「昵称：」前缀**：心跳转录是 `[HH:MM 昵称(QQ)] 内容` 格式，模型容易模仿成 `昵称：内容` / `我：内容`；出站清洗会剥掉时间戳、已知发言人昵称与自称前缀，防止格式被学走。
+- 状态落盘 `mediaDir/heartbeat-state.json`，重启保留当日次数。
+
+配置项（`lib/index.js`）：`heartbeatEnabled`（默认 false）、`heartbeatChats`、`heartbeatTickMs`、`heartbeatQuietHours`（默认 `01:00-08:30`）、`heartbeatMaxPerDay`（5）、`heartbeatIdleMinutes`（10）、`heartbeatCooldownMinutes`（120）、`heartbeatRetryMinutes`（30）、`heartbeatHistoryCount`（20）。
+
+### 2. 其它本地改动（未完全实现 / 未端到端验证）
+
+- `lib/vision.js`：入站图片转述（云端 glm-4.6V-Flash，失败回落本地 Ollama qwen2.5vl:3b），配置 `vision*` 一组。**未完全实现**：表情包/贴纸场景仍有已知问题。
+- `sessionRolloverTokens`：会话「对话消息」token 数达阈值后，下次派发前静默开新会话。
+- `forceLocalPersonaReminder`：每条入站消息前贴一段人设提醒，防弱模型被宿主系统提示带偏。
+- 出站清洗：`stripReplyPrefix` / `stripAssistantMeta` / `splitChatParagraphs`（剥前缀、去助理腔与元信息、按空行分段连发）。
+- `lib/prompt.js` 里的示例人设文案（角色名、口头禅）是作者自用配置，可按需替换。
+
+改动文件：`lib/heartbeat.js`（新增）、`lib/vision.js`（新增）、`lib/index.js`、`lib/bridge.js`、`lib/interim.js`、`lib/registry.js`、`lib/outbound.js`、`lib/inbound.js`、`lib/cq.js`、`lib/prompt.js`、`package.json`（版本 `0.9.7-hb.1`）。
+
+## 已知限制
+
+- **依赖 `get_group_msg_history` 权限**：NapCat 没开这个接口、或群里取不到历史时，心跳拿不到情境，会退化成空情境或不触发。
+- **效果强依赖模型**：弱模型经常不按协议输出 `[SILENT]`、把 `[SILENT]` 混进正文、或模仿聊天记录格式；本地 3B~7B 与免费云端模型的表现差异很大。
+- **配额参数不调会刷屏**：`heartbeatMaxPerDay` / `heartbeatCooldownMinutes` / `heartbeatIdleMinutes` 是唯一的风控，默认值只是保守起点，群里人多或模型话痨时要按群重新调。
+- **只在 Windows + NapCat 环境验证过**：Linux / macOS、Lagrange / LLOneBot / go-cqhttp 均未验证。
+- **改动直接做在编译产物 `lib/` 上**：`src/` 的 TS 源未同步，跑 `scripts/build.sh` 会用上游 src 覆盖本 fork 的改动。
+- **没有自动化测试覆盖心跳路径**：上游测试仍只覆盖原有功能。
+
+## 与上游的关系
+
+- 上游：`mario841859784/dsh-onebot`（npm `dsh-onebot-qq`），BSD-3-Clause。
+- 本 fork 只改运行时代码，不改上游的协议实现、安装方式与工具集；安装仍按上游 README 把本仓库当本地插件挂载。
+
 ## 架构
 
 ![dsh-onebot QQ 通道架构](docs/dsh-onebot-architecture.png)
