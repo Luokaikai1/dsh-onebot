@@ -27,7 +27,7 @@
 - **六道零成本闸门**，全过才消耗一次模型回合：
   1. 安静时段（`heartbeatQuietHours`，`"HH:MM-HH:MM"` 数组，支持跨午夜）
   2. 该群 agent 回合进行中 → 不插队
-  3. 当日主动次数已达 `heartbeatMaxPerDay`（按本地自然日记数）
+  3. 当日主动次数已达 `heartbeatMaxPerDay`（按本地自然日计数）
   4. 距上次主动开口不足 `heartbeatCooldownMinutes`
   5. 距上次心跳判定（含沉默）不足 `heartbeatRetryMinutes`（防止死群每 tick 空转）
   6. 群未冷场：最后一条群消息距今已达到 `heartbeatIdleMinutes`（聊得正热不插话）
