@@ -64,6 +64,24 @@
 - 上游：`mario841859784/dsh-onebot`（npm `dsh-onebot-qq`），BSD-3-Clause。
 - 本 fork 只改运行时代码，不改上游的协议实现、安装方式与工具集；安装仍按上游 README 把本仓库当本地插件挂载。
 
+## 本次更新（v0.9.8-hb.1，2026-10-30）
+
+- **云端失败本地兜底**（`localRetryOnError`，默认关）：模型回合报错且本轮一个字都没发出去时，
+  用同一句话自动重派一次——配合 `dsh-local-first-router` 的 cloud-first 规则，重派直接落到本地模型；
+  每个入站消息最多重试一次，重试期间不再发「答不了」话术。
+- **心跳沉默开关**（`heartbeatSilentAllowed`，默认开）：关闭后心跳提示词不再提供 `[SILENT]` 出口，
+  情境回合一律要开口；出站拦截仍保留，模型若仍输出标记会被吞掉并计为沉默。
+- **补齐缺失模块**：`ambient.js`、`autostart.js`、`interest.js` 三个被 `index.js` 引用的文件
+  此前没有随仓库发布，本次一并补上（安装旧版会因缺文件而无法加载）。
+- 其余为同期内部调整：分段气泡节奏、群聊凑热闹闸门、工具描述与提示词措辞。
+
+## 已知限制
+
+- 端到端只在 NapCat 正向 WS 上验证过；反向 WS、Lagrange、LLOneBot 未逐个回归。
+- 语音转写依赖外部 whisper 可执行文件，未安装时语音消息只保留 `[语音]` 占位。
+- `localRetryOnError` 依赖路由插件把该轮标记为「落本地」；单独安装本插件时，重试仍走原模型。
+- 图片/表情相关能力依赖 NapCat 侧资源，不同 OneBot 实现表现可能不同。
+
 ## 架构
 
 ![dsh-onebot QQ 通道架构](docs/dsh-onebot-architecture.png)
