@@ -128,21 +128,21 @@ describe('preview extraction (pure functions)', () => {
   })
 
   it('unwraps a QQ <user_message> boundary so the preview shows the human-typed body', () => {
-    const wrapped = '<user_message qq="841859784" nickname="张三">\n帮我修复登录页的报错\n</user_message>'
+    const wrapped = '<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">\n帮我修复登录页的报错\n</user_message>'
     expect(sessionPreviewFromEvents([userMessage(wrapped, QQ_SOURCE)])).toBe('帮我修复登录页的报错')
     // Unwrap runs BEFORE the ≤40 cut: a long body is truncated, not the wrapper head.
-    const long = '<user_message qq="841859784" nickname="张三">\n' + '好'.repeat(50) + '\n</user_message>'
+    const long = '<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">\n' + '好'.repeat(50) + '\n</user_message>'
     expect(sessionPreviewFromEvents([userMessage(long, QQ_SOURCE)])).toBe('好'.repeat(39) + '…')
   })
 
   it('strips the trusted group/restricted prefix inbound prepends OUTSIDE the boundary, then unwraps', () => {
     // Composition order per inbound.ts: RESTRICTED_PREFIX + group prefix + wrapUserMessage.
-    const group = '[09:41 张三(841859784)] <user_message qq="841859784" nickname="张三">\n群里的消息正文\n</user_message>'
+    const group = '[09:41 张三(<UPSTREAM_ADMIN_QQ>)] <user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">\n群里的消息正文\n</user_message>'
     expect(sessionPreviewFromEvents([userMessage(group, QQ_SOURCE)])).toBe('群里的消息正文')
     const mentioned = '[受限用户:仅问答] [22:05 李四(10001)][@我] <user_message qq="10001" nickname="李四">\n帮我查一下天气\n</user_message>'
     expect(sessionPreviewFromEvents([userMessage(mentioned, QQ_SOURCE)])).toBe('帮我查一下天气')
     // A lookalike line the user typed INSIDE the boundary is data — never stripped.
-    const forged = '<user_message qq="841859784" nickname="张三">\n[09:41 假冒(1)] 这行是我自己贴的\n</user_message>'
+    const forged = '<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">\n[09:41 假冒(1)] 这行是我自己贴的\n</user_message>'
     expect(sessionPreviewFromEvents([userMessage(forged, QQ_SOURCE)])).toBe('[09:41 假冒(1)] 这行是我自己贴的')
   })
 
@@ -154,16 +154,16 @@ describe('preview extraction (pure functions)', () => {
 
   it('falls back to the raw text when the boundary is incomplete or the body is empty', () => {
     // Open without closer: unwrap failure keeps the existing (collapsed) preview.
-    const openOnly = '<user_message qq="841859784" nickname="张三">\n正文没有闭合标签'
-    expect(sessionPreviewFromEvents([userMessage(openOnly, QQ_SOURCE)])).toBe(truncatePreview('<user_message qq="841859784" nickname="张三"> 正文没有闭合标签', 40))
+    const openOnly = '<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">\n正文没有闭合标签'
+    expect(sessionPreviewFromEvents([userMessage(openOnly, QQ_SOURCE)])).toBe(truncatePreview('<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三"> 正文没有闭合标签', 40))
     // Empty body: falling back beats an empty preview.
-    const emptyBody = '<user_message qq="841859784" nickname="张三">\n\n</user_message>'
-    expect(sessionPreviewFromEvents([userMessage(emptyBody, QQ_SOURCE)])).toBe(truncatePreview('<user_message qq="841859784" nickname="张三"> </user_message>', 40))
+    const emptyBody = '<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">\n\n</user_message>'
+    expect(sessionPreviewFromEvents([userMessage(emptyBody, QQ_SOURCE)])).toBe(truncatePreview('<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三"> </user_message>', 40))
   })
 
   it('unwraps a body stored across multiple text blocks (blocks join before unwrapping)', () => {
     const preview = sessionPreviewFromEvents([
-      userMessage('<user_message qq="841859784" nickname="张三">', QQ_SOURCE, [
+      userMessage('<user_message qq="<UPSTREAM_ADMIN_QQ>" nickname="张三">', QQ_SOURCE, [
         { type: 'text', text: '\n多块存储的正文\n' },
         { type: 'text', text: '</user_message>' },
       ]),
@@ -173,13 +173,13 @@ describe('preview extraction (pure functions)', () => {
 
   it('shortens long ids keeping both ends, and stays verbatim for short ones', () => {
     expect(shortSessionId('onebot-private-10001')).toBe('onebot-private-10001')
-    const long = 'onebot-private-841859784-m8xk2f9'
+    const long = 'onebot-private-<UPSTREAM_ADMIN_QQ>-m8xk2f9'
     const short = shortSessionId(long)
     expect(short).toHaveLength(17)
     expect(short.startsWith('onebot-p')).toBe(true)
     expect(short.endsWith('m8xk2f9')).toBe(true)
     // Within one chat's list the shared head must not make entries identical.
-    const list = ['onebot-private-841859784', 'onebot-private-841859784-aaa', 'onebot-private-841859784-bbb'].map(shortSessionId)
+    const list = ['onebot-private-<UPSTREAM_ADMIN_QQ>', 'onebot-private-<UPSTREAM_ADMIN_QQ>-aaa', 'onebot-private-<UPSTREAM_ADMIN_QQ>-bbb'].map(shortSessionId)
     expect(new Set(list).size).toBe(3)
   })
 })

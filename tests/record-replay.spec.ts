@@ -34,9 +34,9 @@ const readLines = (file: string): InboxLine[] => {
 
 describe('inbound recorder (src/record.ts)', () => {
   it('redacts 6+ digit runs (ids and text) while leaving short numbers intact', () => {
-    expect(redactDigits('我的QQ是 841859784，收货码 1234')).toBe('我的QQ是 841****，收货码 1234')
-    const frame = toInboxFrame({ ...privateEvent('呼叫 13800001111'), user_id: 841859784 } as never)
-    expect(frame.user_id).toBe('841859784') // toInboxFrame itself never masks
+    expect(redactDigits('我的QQ是 <UPSTREAM_ADMIN_QQ>，收货码 1234')).toBe('我的QQ是 841****，收货码 1234')
+    const frame = toInboxFrame({ ...privateEvent('呼叫 13800001111'), user_id: <UPSTREAM_ADMIN_QQ> } as never)
+    expect(frame.user_id).toBe('<UPSTREAM_ADMIN_QQ>') // toInboxFrame itself never masks
     expect(frame.raw_message).toBe('呼叫 13800001111')
   })
 
@@ -81,8 +81,8 @@ describe('inbound recorder (src/record.ts)', () => {
     const h = await makeHarness({ recorder })
     // A non-allowlisted 8-digit user → the whitelist drop path; the recording
     // still captures the frame (redacted) with the decision reason.
-    const event = { ...privateEvent('我的QQ是 841859784，验证码 1234'), user_id: 841859784 }
-    event.sender = { user_id: 841859784, nickname: '小明' }
+    const event = { ...privateEvent('我的QQ是 <UPSTREAM_ADMIN_QQ>，验证码 1234'), user_id: <UPSTREAM_ADMIN_QQ> }
+    event.sender = { user_id: <UPSTREAM_ADMIN_QQ>, nickname: '小明' }
     h.client.send(JSON.stringify(event))
     await new Promise(resolve => setTimeout(resolve, 200))
     await recorder.flush()

@@ -31,8 +31,8 @@
 - 证据：`docs/acceptance-evidence/02-patch-before-update.txt`、本报告 §结论总览；
   8765 现场快照：
   ```
-  LISTEN 0 511 192.168.5.74:8765 0.0.0.0:*  users:(("MainThread",pid=2609953,fd=22))
-  ESTAB  0 0   192.168.5.74:8765 172.17.0.3:*  users:(("MainThread",pid=2609953,fd=24))
+  LISTEN 0 511 192.0.2.10:8765 0.0.0.0:*  users:(("MainThread",pid=2609953,fd=22))
+  ESTAB  0 0   192.0.2.10:8765 172.17.0.3:*  users:(("MainThread",pid=2609953,fd=24))
   ```
   （宿主 stdout 由 app 中心 supervisor 经 pipe 托管、无落盘日志文件，故挂载证据以网关级
   路由实证 + ss 为准，见 R1②。）

@@ -347,7 +347,7 @@ independent clean TypeScript implementation). Tools and boundaries: see the dsh-
 - `code_safe_rollback` / `code_list_backups`
 - Boundaries follow the session sandbox policy: `danger-full-access` unrestricted, `workspace-write` limited to
   the session workspace, `read-only` denied; with no policy service it falls back to `safeEditRoot`
-  (default `/Users/mario/workspace`)
+  (default `~/workspace`)
 - The model may prefer this tool (the `code-safe-edit` skill guides all channels; the QQ platform notes guide
   built-in read/edit conventions without binding to a specific tool name)
 

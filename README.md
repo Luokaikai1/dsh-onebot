@@ -50,7 +50,7 @@
 - `sessionRolloverTokens`：会话「对话消息」token 数达阈值后，下次派发前静默开新会话。
 - `forceLocalPersonaReminder`：每条入站消息前贴一段人设提醒，防弱模型被宿主系统提示带偏。
 - 出站清洗：`stripReplyPrefix` / `stripAssistantMeta` / `splitChatParagraphs`（剥前缀、去助理腔与元信息、按空行分段连发）。
-- `lib/prompt.js` 里的示例人设文案（角色名、口头禅）是作者自用配置，可按需替换。
+- `lib/prompt.js` 里的示例人设文案可按需替换；默认不包含具体角色名。
 
 改动文件：`lib/heartbeat.js`（新增）、`lib/vision.js`（新增）、`lib/index.js`、`lib/bridge.js`、`lib/interim.js`、`lib/registry.js`、`lib/outbound.js`、`lib/inbound.js`、`lib/cq.js`、`lib/prompt.js`、`package.json`（版本 `0.9.7-hb.1`）。
 
@@ -381,7 +381,7 @@ chat 回退到下一条消息新建会话，不会卡死。损坏（碰撞/恢�
 
 - `code_safe_edit`：read → 路径白名单 → **自动备份** → 匹配（精确 → 剥行号前缀 → 空白对齐/Aider 式）→ 替换 → 语法检查（js/cjs/mjs 走 `node --check`）→ **失败自动回滚**
 - `code_safe_rollback` / `code_list_backups`
-- 边界随会话 sandbox 策略：`danger-full-access` 无限制、`workspace-write` 限会话工作区、`read-only` 拒绝；无策略服务回落 `safeEditRoot`（默认 `/Users/mario/workspace`）
+- 边界随会话 sandbox 策略：`danger-full-access` 无限制、`workspace-write` 限会话工作区、`read-only` 拒绝；无策略服务回落 `safeEditRoot`（默认 `~/workspace`）
 - 模型可优先使用此工具（`code-safe-edit` skill 全渠道引导；QQ 平台提示词引导内置 read/edit 惯例，不绑定具体工具名）
 
 ## dm / group 访问策略（初始化必选）
