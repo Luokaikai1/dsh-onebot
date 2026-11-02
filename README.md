@@ -17,6 +17,10 @@
 
 > **本仓库是个人 fork**：基于 [mario841859784/dsh-onebot](https://github.com/mario841859784/dsh-onebot) 的 v0.9.6（npm `dsh-onebot-qq@0.9.6`），上游版权与 BSD-3-Clause 许可不变。上游的功能清单、安装方式、工具文档见上游仓库；本 README 只额外说明本 fork 的改动与已知限制。
 
+## 来源与二创声明
+
+本仓库是 [mario841859784/dsh-onebot](https://github.com/mario841859784/dsh-onebot) v0.9.6 的 fork/二创，遵循上游 **BSD-3-Clause**，保留原始版权声明。上游提供 OneBot 11 协议、QQ 通道与工具集；本仓库只维护 QQ 通道的本地优化，不改变上游协议实现。安装方式与工具文档以上游仓库为准；本仓库的增量与已知限制见下文。
+
 ## 本 fork 的改动
 
 ### 1. 心跳主动搭话（新增 `lib/heartbeat.js`，269 行）
